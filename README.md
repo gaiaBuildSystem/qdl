@@ -131,6 +131,44 @@ Optional parts of QDL are controlled by meson feature options
 
 ---
 
+### Using Docker
+
+To build a statically linked QDL binary for Linux and Windows without
+installing the native toolchains, use the [buildStatic.sh](buildStatic.sh)
+script. It drives the [docker-compose.yml](docker-compose.yml) setup to
+cross-compile self-contained executables:
+
+```bash
+./buildStatic.sh            # build both Linux and Windows
+./buildStatic.sh linux      # build the Linux binary only
+./buildStatic.sh windows    # build the Windows binary only
+```
+
+The statically linked binaries are written under `dist/`:
+
+- `dist/linux-<arch>/qdl` - the Linux executable.
+- `dist/windows-x86_64/qdl.exe` - the Windows executable.
+
+To override the git-derived version baked into the binaries, export
+`VERSION` before running the script:
+
+```bash
+VERSION=1.2.3 ./buildStatic.sh
+```
+
+The build runs as root inside the containers; the outputs are re-owned to
+your host user automatically so they can be moved or installed without
+`sudo`. Set `HOST_UID` and `HOST_GID` to override the ownership explicitly.
+
+Under the hood the script builds the compose images and then runs each
+service:
+
+```bash
+docker compose build linux windows
+docker compose run --rm linux
+docker compose run --rm windows
+```
+
 ## Use QDL
 
 ### EDL mode
