@@ -1,0 +1,34 @@
+# Build statically linked qdl binaries for Linux and Windows.
+#
+#   docker compose run --rm linux
+#   docker compose run --rm windows
+#   docker compose up            # both
+#
+# Results land in ./dist/<target>-<arch>/. Set VERSION to override the
+# git-derived version, and HOST_UID/HOST_GID to get host-owned outputs:
+#
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up
+
+x-qdl-build: &qdl-build
+  volumes:
+    - .:/src:ro
+    - ./dist:/out
+  environment:
+    VERSION: ${VERSION:-}
+    HOST_UID: ${HOST_UID:-}
+    HOST_GID: ${HOST_GID:-}
+
+services:
+  linux:
+    <<: *qdl-build
+    image: qdl-static-linux
+    build:
+      context: docker
+      target: linux
+
+  windows:
+    <<: *qdl-build
+    image: qdl-static-windows
+    build:
+      context: docker
+      target: windows
