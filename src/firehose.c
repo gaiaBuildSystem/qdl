@@ -1059,7 +1059,20 @@ static int firehose_program(struct qdl_device *qdl, struct firehose_op *program)
 	}
 
 	if (!program->sparse) {
-		num_sectors = (qdl_file_getsize(&file) + sector_size - 1) / sector_size;
+		size_t file_size = qdl_file_getsize(&file);
+		size_t skip = (size_t)program->file_offset * sector_size;
+
+		/*
+		 * Only the part of the file past file_sector_offset gets
+		 * streamed, so size the write from there.
+		 */
+		if (skip > file_size) {
+			ux_err("file_sector_offset %u is beyond the end of %s\n",
+			       program->file_offset, program->filename);
+			goto err_close_fd;
+		}
+
+		num_sectors = (file_size - skip + sector_size - 1) / sector_size;
 
 		if (program->num_sectors && num_sectors > program->num_sectors) {
 			ux_err("%s too big for %s truncated to %d\n",
